@@ -1,0 +1,9 @@
+.offer-detail-page .block-system-main-block {
+  width: 55%;
+  float: left;
+}
+
+.offer-detail-page .offer-bid-form {
+  width: 30%;
+  float: right;
+}

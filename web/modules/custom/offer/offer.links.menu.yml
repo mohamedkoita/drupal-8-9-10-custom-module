@@ -10,3 +10,16 @@ offer.admin.structure.settings:
   route_name: entity.offer.settings
   parent: system.admin_structure
 
+# Ici c'est pour un menu dynamique ou un traitement doit être fait avant d'afficher le titre du menu, ou lorsqu'il doit y avoir des conditions spéciales
+offer.account.my_offers:
+  route_name: entity.offer.collection
+  menu_name: main
+  class: Drupal\offer\Plugin\Menu\MyOffers
+  weight: -50
+
+# ici c'est pour un lien de menu basique qui s'affiche sans conditions
+offer.overview:
+  title: 'Offers'
+  route_name: view.offer_overview.page_1
+  menu_name: main
+  weight: 5

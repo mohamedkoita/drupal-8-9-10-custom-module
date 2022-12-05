@@ -7,9 +7,9 @@
   </div>
   <div class="product-details">
     <h4>{{ offer.label() }}</h4>
-    <p>0 bids</p>
+    <p> {{ offer.getBidsNumber() }} bids</p>
     <div class="product-bottom-details">
-      <div class="product-price">{{ offer.getPriceAmount() }}</div>
+      <div class="product-price">Current Bid {{ offer.getHighestBid() }}</div>
     </div>
   </div>
 </a>

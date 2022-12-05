@@ -11,6 +11,8 @@ use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\bid\Entity\Bid;
+
 
 /**
  * Defines the offer entity.
@@ -149,6 +151,47 @@ class Offer extends EditorialContentEntityBase {
    */
   public function getOwnerId() {
     return $this->get('user_id')->target_id;
+  }
+
+  /**
+  * {@inheritdoc}
+  */
+  public function getBidsNumber() {
+
+    $bidNb = \Drupal::entityQuery('bid')
+          ->condition('offer_id', $this->id())
+          ->count()
+          ->execute();
+
+    return $bidNb;
+  }
+
+  /**
+  * {@inheritdoc}
+  */
+  public function getHighestBid() {
+
+    $hgNbQuery = \Drupal::entityQuery('bid')
+          ->condition('offer_id', $this->id())
+          ->sort('bid', 'DESC')
+          ->range(0, 1)
+          ->execute();
+
+    //On va utiliser la méthode Node::load pour récupérer les nodes qu'on va pouvoir récupere à partir des ids obtenus lors
+    //des requêtes ne renvoient que des ids
+
+
+
+  $hgNb = Bid::load(array_key_first($hgNbQuery));
+  if ($hgNb) {
+    return $hgNb->get('bid')->getString();
+  }
+
+  return 0;
+
+
+
+    return 2;
   }
 
   /**

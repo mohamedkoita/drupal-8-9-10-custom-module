@@ -2,3 +2,8 @@ offer_overview_page:
   css:
     theme:
       css/overview.css: {}
+
+platform:
+  css:
+    theme:
+      css/platform.css: {}

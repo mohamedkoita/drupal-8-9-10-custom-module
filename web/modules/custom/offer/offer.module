@@ -68,4 +68,39 @@ function offer_views_pre_render(ViewExecutable $view) {
   if (isset($view) && ($view->storage->id() == 'offer_overview')) {
     $view->element['#attached']['library'][] = 'offer/offer_overview_page';
   }
+
+  /**
+  * Implements hook_page_attachments()
+  */
+  function offer_page_attachments(array &$attachments) {
+    $attachments['#attached']['library'][] = 'offer/platform';
+    dump('OKKKKKKKKKK');
+  }
+
+  /**
+  * Add a "offer-detail-page" class to main content of offer detail view with imolementing preprocess_html hook
+  */
+  // function offer_preprocess_html(&$variables) {
+  //   //On regarde si la route courante contient offer
+  //   $offer = \Drupal::routeMatch()->getParameter('offer');
+  //   //Alors on récupère la page et on y ajoute la classe offer-detail-page
+  //   if ($offer) {
+  //     $variables['attributes']['class'][] = 'offer-detail-page';
+  //   }
+  // }
+
+  /**
+  * Add a "offer-detail-page" class to the body on a offer detail page
+  */
+  //Ici il y a un problème que je n'ai pas encore réussi à adresser. Ce hook ne passe que sur toutes les pages sauf celle où il devrait
+  //De plus il ne passe qu'au premier chargement après avoir vidé les caches. Il faut que je creuse pour mieux comprendre ce qui se passe.
+  function offer_preprocess_html(&$variables) {
+    $offer = \Drupal::routeMatch()->getParameters('offer');
+    if($offer) {
+      $variables['attributes']['class'][] = 'offer-detail-page';
+    }
+    // dump($offer);
+    // \Drupal::messenger()->addMessage(t('Invalid professional record'), 'error');
+  }
+
 }
