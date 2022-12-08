@@ -7,3 +7,7 @@ platform:
   css:
     theme:
       css/platform.css: {}
+  dependencies:
+    - core/drupal.ajax
+    - core/jquery
+    - core/drupal

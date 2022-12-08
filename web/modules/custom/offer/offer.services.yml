@@ -1,0 +1,5 @@
+services:
+  offer.commands:
+    class: \Drupal\offer\Commands\SeedGeneratorCommand
+    tags:
+      - { name: drush.command }

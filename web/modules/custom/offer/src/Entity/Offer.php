@@ -12,6 +12,9 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\bid\Entity\Bid;
+use Drupal\Core\Render\Markup;
+use Drupal\Core\Link;
+use Drupal\Component\Serialization\Json;
 
 
 /**
@@ -166,6 +169,17 @@ class Offer extends EditorialContentEntityBase {
     return $bidNb;
   }
 
+  /*
+  * {@inheritdoc}
+  */
+  public function getOfferBids() {
+    $bidNb = \Drupal::entityQuery('bid')
+          ->condition('offer_id', $this->id())
+          ->execute();
+
+    return $bidNb;
+  }
+
   /**
   * {@inheritdoc}
   */
@@ -181,8 +195,8 @@ class Offer extends EditorialContentEntityBase {
     //des requêtes ne renvoient que des ids
 
 
-
-  $hgNb = Bid::load(array_key_first($hgNbQuery));
+  $idf = reset($hgNbQuery);
+  $hgNb = Bid::load($idf);
   if ($hgNb) {
     return $hgNb->get('bid')->getString();
   }
@@ -215,5 +229,136 @@ class Offer extends EditorialContentEntityBase {
     }
     return '';
   }
+
+  /**
+  * Return a rendered table below an offer
+  * @return a drupal table render array
+  */
+
+  public function getOfferBiddingTable() {
+    $bids = $this->getOfferBids();
+    $row = [];
+    // dump($bids);
+    // die();
+
+    foreach ($bids as $bid) {
+      $bid = Bid::load($bid);
+      $price = $bid->get('bid')->getString();
+      $owner = $bid->getOwner();
+      $ownerName = $owner->getDisplayName();
+      $time = \Drupal::service('date.formatter')->formatTimeDiffSince($bid->created->value);
+
+      $updates = '';
+      $link = '';
+
+      if ($bid->hasRevisions()) {
+        $revisions = $bid->getRevisionsList();
+        //On va d'abord récupérer le tableau de toutes les revisions du bid
+        //On va recupérer l'id de la derniere revision en cours puis retirer la derniere revision qui est celle actuelle
+        $current_revision_id = $bid->getLoadedRevisionId();
+        unset($revisions[$current_revision_id]);
+        //Puis on va récuperer l'avant derniere revision pour comparer la derniere et l'avant dernière
+        //Afin de pouvoir afficher de combien l'utilisateur a augmenté sa mise initiale, ainsi de suite
+        $last_revision_id = max(array_keys($revisions));
+        //On recupere maintenant la revision avec le entity manager
+        $revisionBid = \Drupal::entityTypeManager()
+            ->getStorage('bid')
+            ->loadRevision($last_revision_id);
+
+        $revisionAmount = $revisionBid->get('bid')->getString();
+        $priceDiff = $price - $revisionAmount;
+        $priceDiff = $priceDiff . ' $';
+
+        $updates = ' <svg width="24px" height="18px" viewBox="0 0 24 24"
+                    fill="#61f70a" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6.1018 16.9814C5.02785 16.9814 4.45387 15.7165
+                    5.16108 14.9083L10.6829 8.59762C11.3801 7.80079 12.6197 7.80079
+                    13.3169 8.59762L18.8388 14.9083C19.5459 15.7165 18.972 16.9814
+                    17.898 16.9814H6.1018Z" fill="#61f70a"/>
+                    </svg><small style="color:#0444C4">Last raise was ' .
+                    $priceDiff .'</small> ';
+      }
+
+      $link = '';
+
+      if ($bid->access('delete')) {
+        $url = $bid->toUrl('delete-form'); // On utilise la clé du formulaire ici pour l'avoir
+        // $link = Link::fromTextAndUrl('Remove bid', $url)->toString();
+        $deleteLink = [
+          '#type' => 'link',
+          '#title' => 'Remove bid',
+          '#url' => $url,
+          '#attributes' => [
+            'class' => [
+              'use-ajax', 'button', 'button-small', 'button-danger'
+            ],
+            'data-dialog-type' => 'modal',
+            'data-dialog-options' => Json::encode(['title' => t('Remove bid?'), 'width' => 800,]),
+          ],
+        ];
+
+        $link = \Drupal::service('renderer')->render($deleteLink);
+
+      }
+
+      $row = [
+        Markup::create($ownerName . ' - ' . $time .' ago'),
+        Markup::create($price . '$' . $updates),
+        Markup::create($link),
+
+      ];
+      $rows[]= $row;
+    }
+      $build['table'] = [
+        '#type' => 'table',
+        '#rows' => $rows,
+        '#empty' => t('This offer has no bids yet. Grab your chance!')
+      ];
+
+    return [
+      '#type' => '#markup',
+      '#markup' => \Drupal::service('renderer')->render($build)
+    ];
+    }
+
+/**
+* Checks if the current user has bids on the current offer
+* @return bool
+*/
+public function CurrentUserHasBids() {
+  $user_id = \Drupal::currentUser()->id();
+  $id = $this->id();
+
+  $query = \Drupal::entityQuery('bid')
+        ->condition('offer_id', $id)
+        ->condition('user_id', $user_id)
+        ->count()
+        ->execute();
+
+    if ($query > 0) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+/**
+* Get yhe current bid of current user
+* @return \Drupal\offer\Entity|Bid
+*/
+public function CurrentUserBid() {
+  $user_id = \Drupal::currentUser()->id();
+  $id = $this->id();
+
+  $query = \Drupal::entityQuery('bid')
+        ->condition('offer_id', $id)
+        ->condition('user_id', $user_id)
+        ->sort('created', 'DESC')
+        ->execute();
+
+  $bidId = reset($query);
+  $bid = Bid::load($bidId);
+  return $bid;
+}
 
 }

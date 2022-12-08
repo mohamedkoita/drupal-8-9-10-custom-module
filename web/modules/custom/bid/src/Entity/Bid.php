@@ -32,6 +32,12 @@ use Drupal\Core\Entity\EntityTypeInterface;
 * },
 * handlers = {
 * "access" = "Drupal\bid\BidAccessControlHandler",
+* "form" = {
+*   "delete" = "Drupal\bid\Form\BidDeleteForm",
+* }
+* },
+* links = {
+*   "delete-form" = "/bid/{bid}/delete",
 * },
 * revision_metadata_keys = {
 * "revision_user" = "revision_uid",
@@ -85,6 +91,41 @@ class Bid extends EditorialContentEntityBase {
   */
   public function getOwnerId() {
     return $this->get('user_id')->target_id;
+  }
+
+  /**
+  * Check if bid has revision
+  *@return bool
+  */
+  public function hasRevisions() {
+    $id = $this->id();
+    $query = \Drupal::entityQuery('bid')
+        ->condition('id', $id)
+        ->allRevisions()
+        ->count()
+        ->execute();
+
+    if ($query > 1) {
+      return true;
+    } else {
+      return false;
+    }
+
+  }
+
+  /**
+  * Return all revisions list of bid
+  *@return array
+  */
+  public function getRevisionsList() {
+    $id = $this->id();
+    $revisions = \Drupal::entityQuery('bid')
+        ->condition('id', $id)
+        ->allRevisions()
+        ->execute();
+
+    return $revisions;
+
   }
 
 }
